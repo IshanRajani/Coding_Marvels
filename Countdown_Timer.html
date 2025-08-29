@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Projector Countdown Timer</title>
+  <style>
+    :root{
+      --bg1: #0f172a; /* slate-900 */
+      --bg2: #1e293b; /* slate-800 */
+      --accent: #22d3ee; /* cyan-400 */
+      --accent-2: #a78bfa; /* violet-400 */
+      --warn: #f59e0b; /* amber-500 */
+      --danger: #ef4444; /* red-500 */
+      --ok: #10b981; /* emerald-500 */
+      --card: rgba(255,255,255,0.06);
+      --text: #e5e7eb; /* gray-200 */
+      --muted: #94a3b8; /* slate-400 */
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: radial-gradient(1200px 800px at 20% 20%, #111827 0%, var(--bg1) 35%, var(--bg2) 100%);
+    }
+
+    .wrap{
+      display:grid;
+      grid-template-rows:auto 1fr auto;
+      min-height:100vh;
+      padding: clamp(12px, 2vw, 28px);
+      gap: clamp(12px, 1.2vw, 20px);
+    }
+
+    header{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px;
+    }
+    header .logo{
+      display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:.4px;
+      text-transform:uppercase; color:#e2e8f0;
+    }
+    .logo-dot{ width:12px; height:12px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 0 18px rgba(34,211,238,.55); }
+
+    .card{
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+
+    .controls{
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+      padding: 12px; border-radius: 16px;
+    }
+
+    .controls input[type="number"]{
+      appearance:textfield;
+      background: rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.12);
+      color: var(--text);
+      font-size: clamp(16px, 2.2vw, 22px);
+      padding: 12px 14px; border-radius: 14px; width: 9ch;
+      outline:none;
+    }
+    .controls input[type="number"]::-webkit-outer-spin-button,
+    .controls input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+
+    .btn{
+      cursor:pointer; user-select:none;
+      border:none; outline:none;
+      padding: 12px 16px;
+      font-size: clamp(14px, 1.8vw, 18px);
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #0b1020; font-weight: 800;
+      letter-spacing:.2px;
+      box-shadow: 0 10px 28px rgba(34,211,238,.25);
+      transition: transform .08s ease, box-shadow .2s ease, filter .2s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); filter: brightness(1.05); }
+    .btn:active{ transform: translateY(0); }
+
+    .btn.secondary{ background: rgba(255,255,255,0.08); color: var(--text); box-shadow:none; border:1px solid rgba(255,255,255,0.12); }
+    .btn.warning{ background: linear-gradient(135deg, var(--warn), #f43f5e); color:#0b1020; box-shadow: 0 10px 28px rgba(244,63,94,.25);} 
+    .btn.ghost{ background: transparent; border:1px dashed rgba(255,255,255,.2); color: var(--muted); }
+
+    .grid{ display:grid; place-items:center; }
+
+    .stage{ display:grid; place-items:center; padding: clamp(10px, 2vw, 20px); }
+
+    .timer-card{ position:relative; width:min(92vw, 900px); aspect-ratio: 1/1; }
+    .ring { position:absolute; inset:0; display:grid; place-items:center; }
+
+    svg{ width:100%; height:100%; }
+
+    .time{
+      position:absolute; inset:0; display:grid; place-items:center; text-align:center;
+    }
+
+    .digits{
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+      letter-spacing: 1px;
+      font-size: clamp(42px, 14vw, 140px);
+      line-height: 1;
+      text-shadow: 0 2px 10px rgba(0,0,0,.45);
+    }
+
+    .status{
+      margin-top: 10px;
+      font-size: clamp(14px, 1.8vw, 18px);
+      color: var(--muted);
+    }
+
+    footer{
+      display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;
+      color: var(--muted); font-size: clamp(12px, 1.6vw, 16px);
+    }
+
+    .kbd{ border:1px solid rgba(255,255,255,0.2); padding:.2em .5em; border-radius:8px; background:rgba(255,255,255,0.06); }
+
+    .pulse{
+      animation: pulse 1.25s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(34,211,238,.45); }
+      70% { box-shadow: 0 0 0 30px rgba(34,211,238,0); }
+      100% { box-shadow: 0 0 0 0 rgba(34,211,238,0); }
+    }
+
+    .flash { animation: flash 0.8s steps(2, jump-end) infinite; }
+    @keyframes flash { 50% { opacity: .35; } }
+
+    .hidden{ display:none !important; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo"><span class="logo-dot"></span> Projector Countdown</div>
+      <div class="controls card">
+        <label for="minutes" style="color:var(--muted); padding-left:8px">Total Minutes</label>
+        <input id="minutes" type="number" min="0" step="1" placeholder="e.g. 15" />
+        <button id="startBtn" class="btn">Start</button>
+        <button id="pauseBtn" class="btn secondary" disabled>Pause</button>
+        <button id="resetBtn" class="btn ghost" disabled>Reset</button>
+        <button id="fsBtn" class="btn secondary" title="Toggle Fullscreen (F)">Fullscreen</button>
+        <label style="display:flex; align-items:center; gap:8px; padding: 0 12px; color:var(--muted)">
+          <input id="soundToggle" type="checkbox" checked /> Sound
+        </label>
+      </div>
+    </header>
+
+    <main class="stage grid">
+      <div class="timer-card card pulse" id="timerCard">
+        <div class="ring">
+          <svg viewBox="0 0 300 300" aria-hidden="true">
+            <defs>
+              <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="var(--accent)" />
+                <stop offset="100%" stop-color="var(--accent-2)" />
+              </linearGradient>
+            </defs>
+            <circle cx="150" cy="150" r="130" stroke="rgba(255,255,255,.08)" stroke-width="18" fill="none" />
+            <circle id="progress" cx="150" cy="150" r="130" stroke="url(#grad)" stroke-width="18" stroke-linecap="round" fill="none"
+              stroke-dasharray="816.814" stroke-dashoffset="0" transform="rotate(-90 150 150)" />
+          </svg>
+        </div>
+        <div class="time">
+          <div class="digits" id="display">00:00</div>
+          <div class="status" id="status">Ready</div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div>
+        Shortcuts: <span class="kbd">S</span> Start/Pause · <span class="kbd">R</span> Reset · <span class="kbd">F</span> Fullscreen
+      </div>
+      <div>
+        High-contrast, projector friendly. Last minutes flash.
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    (function(){
+      const minutesInput = document.getElementById('minutes');
+      const startBtn = document.getElementById('startBtn');
+      const pauseBtn = document.getElementById('pauseBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const fsBtn = document.getElementById('fsBtn');
+      const soundToggle = document.getElementById('soundToggle');
+      const display = document.getElementById('display');
+      const statusEl = document.getElementById('status');
+      const progress = document.getElementById('progress');
+      const timerCard = document.getElementById('timerCard');
+
+      const CIRC = 2 * Math.PI * 130; // 816.814...
+      progress.setAttribute('stroke-dasharray', String(CIRC));
+
+      let totalMs = 0; // total countdown ms
+      let endAt = 0;   // timestamp when countdown ends
+      let remaining = 0; // remaining ms
+      let rafId = null;
+      let running = false;
+      let audioCtx = null; // lazily created
+
+      // Persist last value
+      const saved = localStorage.getItem('countdown:minutes');
+      if (saved) minutesInput.value = saved;
+
+      function fmt(ms){
+        if (ms < 0) ms = 0;
+        const totalSec = Math.ceil(ms / 1000);
+        const hrs = Math.floor(totalSec / 3600);
+        const mins = Math.floor((totalSec % 3600) / 60);
+        const secs = totalSec % 60;
+        const hh = hrs > 0 ? String(hrs).padStart(2,'0')+':' : '';
+        return hh + String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+      }
+
+      function setStatus(msg){ statusEl.textContent = msg; }
+
+      function setProgress(ms){
+        const ratio = totalMs > 0 ? ms / totalMs : 0; // remaining / total
+        const offset = CIRC * (1 - ratio);
+        progress.style.strokeDashoffset = String(offset);
+
+        // color state
+        const ratioLeft = ms / (totalMs || 1);
+        if (!running) {
+          progress.style.stroke = 'url(#grad)';
+          timerCard.classList.remove('flash');
+          return;
+        }
+        if (ratioLeft <= 0.15) {
+          progress.style.stroke = 'var(--danger)';
+          timerCard.classList.add('flash');
+        } else if (ratioLeft <= 0.35) {
+          progress.style.stroke = 'var(--warn)';
+          timerCard.classList.remove('flash');
+        } else {
+          progress.style.stroke = 'url(#grad)';
+          timerCard.classList.remove('flash');
+        }
+      }
+
+      function update(){
+        remaining = endAt - performance.now();
+        if (remaining <= 0){
+          display.textContent = fmt(0);
+          setProgress(0);
+          stop();
+          setStatus('Time\'s up');
+          chime();
+          return;
+        }
+        display.textContent = fmt(remaining);
+        setProgress(remaining);
+        rafId = requestAnimationFrame(update);
+      }
+
+      function start(){
+        if (running) return;
+        let mins = Number(minutesInput.value);
+        if (!Number.isFinite(mins) || mins <= 0){
+          alert('Please enter total minutes (> 0).');
+          minutesInput.focus();
+          return;
+        }
+        totalMs = Math.round(mins * 60 * 1000);
+        endAt = performance.now() + (remaining > 0 ? remaining : totalMs);
+        running = true;
+        minutesInput.disabled = true;
+        startBtn.textContent = 'Resume';
+        pauseBtn.disabled = false;
+        resetBtn.disabled = false;
+        setStatus('Running…');
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(update);
+        setProgress(remaining > 0 ? remaining : totalMs);
+        localStorage.setItem('countdown:minutes', String(mins));
+      }
+
+      function pause(){
+        if (!running) return;
+        running = false;
+        cancelAnimationFrame(rafId);
+        remaining = Math.max(0, endAt - performance.now());
+        setStatus('Paused');
+        minutesInput.disabled = false;
+      }
+
+      function stop(){
+        running = false;
+        cancelAnimationFrame(rafId);
+        remaining = 0;
+        minutesInput.disabled = false;
+      }
+
+      function reset(){
+        stop();
+        const mins = Number(minutesInput.value) || 0;
+        totalMs = Math.round(mins * 60 * 1000);
+        display.textContent = fmt(totalMs);
+        setStatus('Ready');
+        setProgress(totalMs);
+        pauseBtn.disabled = true;
+        resetBtn.disabled = true;
+        startBtn.textContent = 'Start';
+        timerCard.classList.remove('flash');
+      }
+
+      function chime(){
+        if (!soundToggle.checked) return;
+        try {
+          if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.type = 'sine';
+          o.frequency.value = 880; // A5
+          g.gain.value = 0.001;
+          o.connect(g); g.connect(audioCtx.destination);
+          o.start();
+          // simple "ding" envelope
+          g.gain.exponentialRampToValueAtTime(0.2, audioCtx.currentTime + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.0);
+          o.stop(audioCtx.currentTime + 1.05);
+        } catch (e) {
+          /* ignore */
+        }
+      }
+
+      // Wire up controls
+      startBtn.addEventListener('click', () => {
+        if (!running && remaining === 0){ reset(); }
+        start();
+      });
+
+      pauseBtn.addEventListener('click', () => {
+        if (running) { pause(); } else { start(); }
+      });
+
+      resetBtn.addEventListener('click', () => { reset(); });
+
+      fsBtn.addEventListener('click', () => {
+        const el = document.documentElement;
+        if (!document.fullscreenElement){ el.requestFullscreen?.(); }
+        else { document.exitFullscreen?.(); }
+      });
+
+      // Keyboard shortcuts
+      window.addEventListener('keydown', (e) => {
+        const k = e.key.toLowerCase();
+        if (k === 's') { e.preventDefault(); running ? pause() : start(); }
+        if (k === 'r') { e.preventDefault(); reset(); }
+        if (k === 'f') { e.preventDefault(); fsBtn.click(); }
+      });
+
+      // Initialize display based on input
+      function init(){
+        const mins = Number(minutesInput.value) || 0;
+        totalMs = Math.round(mins * 60 * 1000);
+        display.textContent = mins > 0 ? fmt(totalMs) : '00:00';
+        setProgress(totalMs);
+      }
+      minutesInput.addEventListener('input', init);
+      init();
+    })();
+  </script>
+</body>
+</html>
