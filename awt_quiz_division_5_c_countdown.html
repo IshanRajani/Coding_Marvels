@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AWT Quiz - Division 5C</title>
+  <style>
+    :root{
+      --bg1: #0f172a;
+      --bg2: #0b1220;
+      --card: rgba(255,255,255,0.06);
+      --accent: #7c3aed;
+      --accent-2: #06b6d4;
+      --glass: rgba(255,255,255,0.04);
+      --glass-2: rgba(255,255,255,0.02);
+      --radius: 18px;
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; 
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.12), transparent),
+                  radial-gradient(1000px 600px at 90% 90%, rgba(6,182,212,0.08), transparent),
+                  linear-gradient(180deg,var(--bg1),var(--bg2));
+      display:flex;align-items:center;justify-content:center;padding:32px;
+    }
+    .card{
+      width:100%;max-width:980px;padding:28px;border-radius:var(--radius);background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));backdrop-filter: blur(8px);box-shadow: 0 10px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03);
+      display:grid;grid-template-columns:420px 1fr;gap:20px;align-items:center;
+    }
+    header{grid-column:1/-1;display:flex;align-items:center;gap:16px}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-weight:700;color:white;font-size:20px;box-shadow:0 6px 18px rgba(124,58,237,0.18)}
+    h1{margin:0;color:white;font-size:20px}
+    p.lead{margin:0;color:rgba(255,255,255,0.6);font-size:13px}
+
+    /* Left - timer */
+    .timer-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;padding:18px;background:linear-gradient(180deg,var(--glass),var(--glass-2));border-radius:14px}
+    .ring{position:relative;width:320px;height:320px;display:grid;place-items:center}
+    svg{transform:rotate(-90deg);width:100%;height:100%}
+    .time-display{position:absolute;display:flex;flex-direction:column;align-items:center;gap:8px}
+    .time-display .minutes{font-size:48px;font-weight:700;color:white}
+    .time-display .label{font-size:13px;color:rgba(255,255,255,0.65)}
+
+    /* Controls */
+    .controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+    input[type=number]{width:120px;padding:10px;border-radius:10px;border:none;background:transparent;color:white;font-weight:600;font-size:16px;text-align:center;border:1px solid rgba(255,255,255,0.04)}
+    button{padding:10px 14px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(6,182,212,0.08)}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:rgba(255,255,255,0.9);box-shadow:none}
+
+    /* Right column */
+    .right{padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:14px;height:100%;display:flex;flex-direction:column;gap:12px}
+    .preset-buttons{display:flex;gap:10px;flex-wrap:wrap}
+    .info{color:rgba(255,255,255,0.75);font-size:14px}
+
+    footer{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;margin-top:6px;color:rgba(255,255,255,0.5);font-size:13px}
+
+    @media (max-width:900px){.card{grid-template-columns:1fr;}.ring{width:260px;height:260px}}
+  </style>
+</head>
+<body>
+  <div class="card" role="application" aria-label="AWT Quiz - Division 5C Countdown">
+    <header>
+      <div class="logo">AWT</div>
+      <div>
+        <h1>AWT Quiz - Division 5C</h1>
+        <p class="lead">A clean, responsive countdown timer — set minutes and start the quiz clock.</p>
+      </div>
+    </header>
+
+    <section class="timer-wrap" aria-hidden="false">
+      <div class="ring" aria-hidden="true">
+        <svg viewBox="0 0 120 120">
+          <defs>
+            <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#7c3aed" />
+              <stop offset="100%" stop-color="#06b6d4" />
+            </linearGradient>
+          </defs>
+          <circle cx="60" cy="60" r="52" stroke="rgba(255,255,255,0.04)" stroke-width="12" fill="none"></circle>
+          <circle id="progress" cx="60" cy="60" r="52" stroke="url(#g1)" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="326.7256" stroke-dashoffset="0"></circle>
+        </svg>
+        <div class="time-display" role="timer" aria-live="polite">
+          <div class="minutes">00:00</div>
+          <div class="label">Time Remaining</div>
+        </div>
+      </div>
+
+      <div class="controls" aria-hidden="false">
+        <label for="minutes" class="sr-only" style="display:none">Minutes</label>
+        <input id="minutes" type="number" min="0" max="999" step="1" value="5" aria-label="Minutes" />
+        <button id="start">Start</button>
+        <button id="pause" class="ghost">Pause</button>
+        <button id="reset" class="ghost">Reset</button>
+        <button id="download" class="ghost">Download HTML</button>
+      </div>
+    </section>
+
+    <aside class="right">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong style="color:white">Session Controls</strong>
+          <small style="color:rgba(255,255,255,0.6)">for quizzes & timed tasks</small>
+        </div>
+        <div class="preset-buttons" style="margin-top:12px">
+          <button data-min="5">5 min</button>
+          <button data-min="10">10 min</button>
+          <button data-min="15">15 min</button>
+          <button data-min="20">20 min</button>
+          <button data-min="30">30 min</button>
+        </div>
+      </div>
+
+      <div class="info">
+        <p><strong>How to use:</strong> Enter desired minutes or choose a preset, then press <em>Start</em>. Use <em>Pause</em> to stop the clock temporarily and <em>Reset</em> to return to the initial value.</p>
+      </div>
+
+      <div style="margin-top:auto;color:rgba(255,255,255,0.6);font-size:13px">
+        <strong>Note:</strong> When the timer ends, a chime will play and the card will pulse to grab attention.
+      </div>
+    </aside>
+
+    <footer>
+      <div>Made for: <strong>Division 5C</strong></div>
+      <div>&copy; <span id="year"></span> AWT Quiz</div>
+    </footer>
+  </div>
+
+  <audio id="chime" preload="auto">
+    <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YSQAAAAA" type="audio/wav">
+  </audio>
+
+  <script>
+    // Elements
+    const minutesInput = document.getElementById('minutes');
+    const startBtn = document.getElementById('start');
+    const pauseBtn = document.getElementById('pause');
+    const resetBtn = document.getElementById('reset');
+    const downloadBtn = document.getElementById('download');
+    const timeDisplay = document.querySelector('.minutes');
+    const progress = document.getElementById('progress');
+    const presetBtns = document.querySelectorAll('[data-min]');
+    const chime = document.getElementById('chime');
+    const yearSpan = document.getElementById('year');
+    yearSpan.textContent = new Date().getFullYear();
+
+    // Progress circle constants
+    const R = 52; // radius in svg circle
+    const CIRC = 2 * Math.PI * R; // circumference
+    progress.style.strokeDasharray = CIRC;
+
+    let totalSeconds = parseInt(minutesInput.value || 0) * 60;
+    let remaining = totalSeconds;
+    let interval = null;
+    let isRunning = false;
+    let initialSeconds = totalSeconds;
+
+    function formatTime(s){
+      s = Math.max(0, Math.floor(s));
+      const m = Math.floor(s/60); const sec = s % 60;
+      return String(m).padStart(2,'0')+":"+String(sec).padStart(2,'0');
+    }
+
+    function updateDisplay(){
+      timeDisplay.textContent = formatTime(remaining);
+      const pct = initialSeconds>0 ? (remaining / initialSeconds) : 0;
+      progress.style.strokeDashoffset = CIRC * (1 - pct);
+      // color pulse when near end
+      if(remaining <= 10 && isRunning){
+        progress.style.filter = 'drop-shadow(0 6px 18px rgba(124,58,237,0.24))';
+      } else {
+        progress.style.filter = 'none';
+      }
+    }
+
+    function startTimer(){
+      if(isRunning) return;
+      if(remaining <= 0){ remaining = initialSeconds; }
+      if(remaining <= 0) return;
+      isRunning = true;
+      startBtn.disabled = true;
+      minutesInput.disabled = true;
+      pauseBtn.classList.remove('ghost');
+
+      const start = Date.now();
+      let lastTick = start;
+      interval = setInterval(()=>{
+        const now = Date.now();
+        const elapsed = Math.round((now - start)/1000);
+        remaining = Math.max(0, initialSeconds - elapsed);
+        updateDisplay();
+        if(remaining <= 0){
+          stopTimer(true);
+        }
+      }, 250);
+    }
+
+    function stopTimer(finished=false){
+      clearInterval(interval); interval = null; isRunning = false; startBtn.disabled = false; minutesInput.disabled = false;
+      if(finished){
+        // play chime and animate
+        try{ chime.currentTime = 0; chime.play(); }catch(e){}
+        // brief pulse
+        document.querySelector('.timer-wrap').animate([{transform:'scale(1)'},{transform:'scale(1.03)'},{transform:'scale(1)'}],{duration:700,iterations:1});
+      }
+    }
+
+    function pauseTimer(){
+      if(!isRunning) return;
+      clearInterval(interval); interval = null; isRunning = false; startBtn.disabled = false; minutesInput.disabled = false;
+    }
+
+    function resetTimer(){
+      pauseTimer();
+      remaining = initialSeconds;
+      updateDisplay();
+    }
+
+    // Event bindings
+    startBtn.addEventListener('click', ()=>{
+      // if minutes changed since initial
+      if(!isRunning){
+        const m = parseInt(minutesInput.value || 0);
+        if(m < 0) minutesInput.value = 0;
+        initialSeconds = Math.max(0, Math.floor(m)) * 60;
+        remaining = initialSeconds;
+        updateDisplay();
+      }
+      startTimer();
+    });
+    pauseBtn.addEventListener('click', ()=>{ pauseTimer(); });
+    resetBtn.addEventListener('click', ()=>{ resetTimer(); });
+
+    minutesInput.addEventListener('change', ()=>{
+      const m = parseInt(minutesInput.value || 0);
+      initialSeconds = Math.max(0, Math.floor(m)) * 60;
+      remaining = initialSeconds;
+      updateDisplay();
+    });
+
+    presetBtns.forEach(b => b.addEventListener('click', ()=>{
+      minutesInput.value = b.dataset.min;
+      minutesInput.dispatchEvent(new Event('change'));
+    }));
+
+    // Download current HTML (client-side)
+    downloadBtn.addEventListener('click', ()=>{
+      const content = '<!doctype html>\n' + document.documentElement.outerHTML;
+      const blob = new Blob([content], {type: 'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'AWT_Quiz_Division5C_Countdown.html';
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    // Initialize display
+    initialSeconds = Math.max(0, Math.floor(parseInt(minutesInput.value || 0))) * 60;
+    remaining = initialSeconds;
+    updateDisplay();
+
+    // Accessibility: keyboard shortcuts
+    document.addEventListener('keydown', (e)=>{
+      if(e.code === 'Space'){
+        e.preventDefault(); if(isRunning) pauseTimer(); else startBtn.click();
+      }
+      if(e.key.toLowerCase() === 'r') resetBtn.click();
+    });
+  </script>
+</body>
+</html>
