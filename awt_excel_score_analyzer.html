@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AWT — Excel Score Analyzer</title>
+  <style>
+    :root{
+      --bg:#0b1220; --card:#071026; --accent:#7c3aed; --accent2:#06b6d4; --muted:rgba(255,255,255,0.65);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:linear-gradient(180deg,var(--bg),#071226);color:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;padding:28px;}
+    .wrap{width:100%;max-width:1100px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:14px;padding:22px;box-shadow:0 12px 40px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:12px}
+    .logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-weight:800;color:white}
+    h1{margin:0;font-size:18px}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+    .uploader{margin-top:18px;border:2px dashed rgba(255,255,255,0.06);padding:18px;border-radius:12px;display:flex;gap:16px;align-items:center;justify-content:space-between;background:linear-gradient(90deg, rgba(124,58,237,0.02), rgba(6,182,212,0.01))}
+    .drop{flex:1;display:flex;gap:12px;align-items:center}
+    .drop input{display:none}
+    .drop .text{color:var(--muted);font-size:14px}
+    .actions{display:flex;gap:8px}
+    button{background:linear-gradient(90deg,var(--accent),var(--accent2));border:none;color:white;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);font-weight:600}
+    .stats{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:12px;border-radius:12px;flex:1;min-width:180px;border:1px solid rgba(255,255,255,0.03)}
+    .card h3{margin:0;font-size:20px}
+    .card p{margin:6px 0 0 0;color:var(--muted);font-size:13px}
+    .results{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:18px}
+    table{width:100%;border-collapse:collapse;background:transparent}
+    th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left;font-size:14px}
+    th{font-size:13px;color:var(--muted);font-weight:700}
+    .empty{color:var(--muted);padding:18px;text-align:center}
+    .hint{margin-top:10px;color:var(--muted);font-size:13px}
+    footer{margin-top:14px;display:flex;justify-content:space-between;align-items:center;color:rgba(255,255,255,0.6);font-size:13px}
+    @media (max-width:900px){.results{grid-template-columns:1fr;}.stats{flex-direction:column}}
+  </style>
+</head>
+<body>
+  <div class="wrap" role="main" aria-label="AWT Excel Score Analyzer">
+    <header>
+      <div class="logo">AWT</div>
+      <div>
+        <h1>AWT — Excel Score Analyzer</h1>
+        <p class="lead">Upload an Excel file (.xlsx/.xls/.csv). The app will show students who scored 30, 29 and 28 marks.</p>
+      </div>
+    </header>
+
+    <section class="uploader" id="uploader">
+      <div class="drop" id="dropzone">
+        <div style="display:flex;flex-direction:column">
+          <strong style="font-size:14px">Drag & drop or select a file</strong>
+          <span class="text">Accepted: .xlsx, .xls, .csv — Must contain a name column and a score/marks column</span>
+        </div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" />
+      </div>
+      <div class="actions">
+        <label for="fileInput"><button class="ghost">Choose file</button></label>
+        <button id="analyze" disabled>Analyze</button>
+      </div>
+    </section>
+
+    <div class="hint">Column detection: the app will look for headers like <em>full name, name, student name, first name + last name</em> for the student's full name, and <em>score, marks, marks_obtained</em> for the score column. You can still upload files with different column names — the app will show a picker if ambiguous.</div>
+
+    <div class="stats" id="stats" aria-live="polite" style="display:none">
+      <div class="card">
+        <h3 id="total">0</h3>
+        <p>Total rows processed</p>
+      </div>
+      <div class="card">
+        <h3 id="got30">0</h3>
+        <p>Scored 30</p>
+      </div>
+      <div class="card">
+        <h3 id="got29">0</h3>
+        <p>Scored 29</p>
+      </div>
+      <div class="card">
+        <h3 id="got28">0</h3>
+        <p>Scored 28</p>
+      </div>
+    </div>
+
+    <div class="results" id="results" style="display:none">
+      <div class="card">
+        <h3>Scored 30</h3>
+        <div id="list30"></div>
+      </div>
+      <div class="card">
+        <h3>Scored 29</h3>
+        <div id="list29"></div>
+      </div>
+      <div class="card">
+        <h3>Scored 28</h3>
+        <div id="list28"></div>
+      </div>
+    </div>
+
+    <footer>
+      <div>Subject Faculty: <strong>Ishan K Rajani</strong></div>
+      <div>&copy; <span id="year"></span> AWT Quiz</div>
+    </footer>
+  </div>
+
+  <!-- SheetJS from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+    const fileInput = document.getElementById('fileInput');
+    const dropzone = document.getElementById('dropzone');
+    const analyzeBtn = document.getElementById('analyze');
+    const stats = document.getElementById('stats');
+    const results = document.getElementById('results');
+    const list30 = document.getElementById('list30');
+    const list29 = document.getElementById('list29');
+    const list28 = document.getElementById('list28');
+    const totalEl = document.getElementById('total');
+    const got30 = document.getElementById('got30');
+    const got29 = document.getElementById('got29');
+    const got28 = document.getElementById('got28');
+
+    let workbookData = null;
+    let rows = [];
+
+    // Drag & drop UI
+    ['dragenter','dragover'].forEach(ev=>{
+      dropzone.addEventListener(ev, e=>{ e.preventDefault(); dropzone.style.borderColor = 'rgba(124,58,237,0.5)'; });
+    });
+    ['dragleave','drop'].forEach(ev=>{
+      dropzone.addEventListener(ev, e=>{ e.preventDefault(); dropzone.style.borderColor = ''; });
+    });
+    dropzone.addEventListener('drop', e=>{
+      if(e.dataTransfer.files && e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        analyzeBtn.disabled = false;
+      }
+    });
+
+    fileInput.addEventListener('change', ()=>{
+      analyzeBtn.disabled = !fileInput.files.length;
+    });
+
+    analyzeBtn.addEventListener('click', ()=>{
+      if(!fileInput.files.length) return alert('Please choose an Excel/CSV file first.');
+      const f = fileInput.files[0];
+      const reader = new FileReader();
+      reader.onload = function(e){
+        const data = e.target.result;
+        let wb;
+        try {
+          // read as binary string or array buffer depending on file type
+          const arr = new Uint8Array(data);
+          wb = XLSX.read(arr, {type: 'array'});
+        } catch(err){
+          try { wb = XLSX.read(data, {type:'binary'}); } catch(e){ alert('Failed to read file. Make sure it is a valid Excel/CSV file.'); return; }
+        }
+        // take first sheet
+        const firstSheetName = wb.SheetNames[0];
+        const ws = wb.Sheets[firstSheetName];
+        const json = XLSX.utils.sheet_to_json(ws, {defval: ''});
+        workbookData = json;
+        processData(json);
+      };
+      // read as arrayBuffer for robust handling
+      reader.readAsArrayBuffer(f);
+    });
+
+    function findBestNameField(headers) {
+      const lower = headers.map(h=>String(h).toLowerCase());
+      const candidates = ['full name','fullname','name','student name','student_name','studentname'];
+      for(const c of candidates) {
+        const idx = lower.findIndex(h=>h.includes(c));
+        if(idx>=0) return headers[idx];
+      }
+      // try first+last combination
+      const firstIdx = lower.findIndex(h=>h.includes('first') && h.includes('name'));
+      const lastIdx = lower.findIndex(h=>h.includes('last') && h.includes('name'));
+      if(firstIdx>=0 && lastIdx>=0) return {first: headers[firstIdx], last: headers[lastIdx]};
+
+      // fallback: pick a header that's likely to be name (contains 'name' word)
+      const nameIdx = lower.findIndex(h=>h.includes('name'));
+      if(nameIdx>=0) return headers[nameIdx];
+
+      // fallback: try common pair 'first' or 'last'
+      const fIdx = lower.findIndex(h=>h.includes('first'));
+      const lIdx = lower.findIndex(h=>h.includes('last'));
+      if(fIdx>=0 && lIdx>=0) return {first: headers[fIdx], last: headers[lIdx]};
+
+      return null;
+    }
+
+    function findBestScoreField(headers) {
+      const lower = headers.map(h=>String(h).toLowerCase());
+      const candidates = ['score','marks','marks_obtained','marksobtained','obtained','obtained marks','total marks','marks scored'];
+      for(const c of candidates) {
+        const idx = lower.findIndex(h=>h.includes(c));
+        if(idx>=0) return headers[idx];
+      }
+      // fallback to any numeric-like header
+      for(let i=0;i<lower.length;i++){
+        if(lower[i].match(/score|marks|mark/)) return headers[i];
+      }
+      return null;
+    }
+
+    function processData(json){
+      if(!json || !json.length) { alert('No rows found in the first sheet.'); return; }
+      rows = json;
+      // collect headers
+      const headers = Object.keys(json[0]);
+      const nameField = findBestNameField(headers);
+      const scoreField = findBestScoreField(headers);
+
+      // if ambiguous, show a quick picker (simple prompt)
+      let nameKey = null;
+      let lastKey = null;
+      if(nameField === null) {
+        // try to choose first text field
+        nameKey = headers.find(h=>String(json[0][h]).trim().length>0);
+      } else if(typeof nameField === 'object') {
+        nameKey = nameField.first; lastKey = nameField.last;
+      } else {
+        nameKey = nameField;
+      }
+      let scoreKey = scoreField;
+      if(!scoreKey) {
+        // prompt user to pick a numeric field
+        const numericCandidates = headers.filter(h=>json.some(r=>!isNaN(Number(r[h]))));
+        if(numericCandidates.length===0) { alert('No numeric column found for marks/score. Please check the file.'); return; }
+        scoreKey = numericCandidates[0];
+      }
+
+      // Parse rows into normalized format
+      const parsed = rows.map(r=>{
+        let fullName = '';
+        if(nameKey && lastKey) {
+          fullName = String(r[nameKey] || '') + ' ' + String(r[lastKey] || '');
+        } else if(nameKey) {
+          fullName = String(r[nameKey] || '');
+        } else {
+          // try combining common fields
+          const possible = ['first name','firstname','first','given name','givenname'];
+          const first = headers.find(h=>possible.includes(String(h).toLowerCase()));
+          const last = headers.find(h=>String(h).toLowerCase().includes('last'));
+          if(first && last) fullName = String(r[first]||'') + ' ' + String(r[last]||'');
+          else fullName = Object.values(r).slice(0,2).join(' ');
+        }
+        const rawScore = r[scoreKey];
+        const score = Number(rawScore);
+        return { fullName: fullName.trim(), score: isNaN(score) ? rawScore : score };
+      });
+
+      // now filter for 30,29,28 (accept numeric or string equal)
+      const list_30 = parsed.filter(p=>Number(p.score)===30);
+      const list_29 = parsed.filter(p=>Number(p.score)===29);
+      const list_28 = parsed.filter(p=>Number(p.score)===28);
+
+      // show stats
+      stats.style.display = 'flex';
+      results.style.display = 'grid';
+      totalEl.textContent = parsed.length;
+      got30.textContent = list_30.length;
+      got29.textContent = list_29.length;
+      got28.textContent = list_28.length;
+
+      // render lists (tables)
+      renderList(list30, list_30);
+      renderList(list29, list_29);
+      renderList(list28, list_28);
+
+      // enable download of filtered lists as CSV
+      createDownloadButtons(list_30, list_29, list_28);
+    }
+
+    function renderList(container, data){
+      if(!data || !data.length){ container.innerHTML = '<div class=\"empty\">No records found</div>'; return; }
+      let html = '<table><thead><tr><th>#</th><th>Full Name</th><th>Score</th></tr></thead><tbody>';
+      data.forEach((d,i)=>{
+        html += `<tr><td>${i+1}</td><td>${escapeHtml(d.fullName)}</td><td>${escapeHtml(String(d.score))}</td></tr>`;
+      });
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function createDownloadButtons(a30, a29, a28) {
+      // add small download links under each list
+      addDownload(list30, a30, '30');
+      addDownload(list29, a29, '29');
+      addDownload(list28, a28, '28');
+    }
+    function addDownload(container, data, label) {
+      const wrapper = document.createElement('div');
+      wrapper.style.marginTop = '8px';
+      if(!data || !data.length){ container.appendChild(wrapper); return; }
+      const btn = document.createElement('button');
+      btn.textContent = 'Download CSV';
+      btn.style.marginTop = '8px';
+      btn.addEventListener('click', ()=>{
+        const csv = toCSV(data);
+        const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `scores_${label}.csv`;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+      });
+      wrapper.appendChild(btn);
+      container.appendChild(wrapper);
+    }
+
+    function toCSV(arr){
+      if(!arr || !arr.length) return '';
+      const keys = Object.keys(arr[0]);
+      const lines = [keys.join(',')];
+      for(const r of arr){
+        const vals = keys.map(k=>`"${String(r[k]).replace(/"/g,'""')}"`);
+        lines.push(vals.join(','));
+      }
+      return lines.join('\\n');
+    }
+
+    function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  </script>
+</body>
+</html>
